@@ -837,6 +837,12 @@ export default function MoneyScreen() {
 
   return (
     <>
+      <header style={{ marginBottom: 14 }}>
+        <h1>Money</h1>
+        <p className="muted small" style={{ marginTop: 3 }}>
+          Every recurring payment, when it is due, and what changes if you act.
+        </p>
+      </header>
       <Tabs
         label="Money sections"
         value={sub}
