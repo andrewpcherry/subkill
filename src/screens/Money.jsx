@@ -106,7 +106,7 @@ function RecurringList() {
                 className={`lrow ${p.status === 'cancelled' ? 'cancelled' : ''}`}
                 onClick={() => setSheet({ kind: 'payment', paymentId: p.id })}
               >
-                <Avatar name={p.merchant} />
+                <Avatar name={p.merchant} category={p.category} />
                 <div className="grow">
                   <div className="row gap-sm" style={{ alignItems: 'baseline' }}>
                     <span className="name truncate" style={{ fontWeight: 560 }}>{p.merchant}</span>
@@ -299,7 +299,7 @@ function Timeline() {
                 const p = paymentById(state, o.paymentId);
                 return (
                   <button key={o.id} type="button" className="lrow" onClick={() => setSheet({ kind: 'payment', paymentId: o.paymentId })}>
-                    <Avatar name={p?.merchant || '?'} />
+                    <Avatar name={p?.merchant || '?'} category={p?.category} />
                     <div className="grow">
                       <div style={{ fontWeight: 550 }}>{p?.merchant}</div>
                       <div className="tiny dim">
@@ -493,7 +493,7 @@ function Preview() {
               <div className="card" key={p.id}>
                 <div className="row between gap-sm wrap">
                   <div className="row gap-sm grow" style={{ minWidth: 0 }}>
-                    <Avatar name={p.merchant} />
+                    <Avatar name={p.merchant} category={p.category} />
                     <div className="grow" style={{ minWidth: 0 }}>
                       <div className="row gap-sm" style={{ alignItems: 'baseline' }}>
                         <span style={{ fontWeight: 560 }}>{p.merchant}</span>
@@ -741,7 +741,7 @@ function Trials() {
               <Card key={p.id} className="pad-lg">
                 <div className="row between gap-sm wrap">
                   <div className="row gap-sm grow">
-                    <Avatar name={p.merchant} />
+                    <Avatar name={p.merchant} category={p.category} />
                     <div>
                       <div style={{ fontWeight: 570 }}>{p.merchant}</div>
                       <div className="tiny dim">{p.plan}</div>

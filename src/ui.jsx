@@ -208,9 +208,80 @@ export function Empty({ icon, title, body, action }) {
   );
 }
 
-export function Avatar({ name }) {
+export const CATEGORY_COLOR = {
+  Streaming: '#ff4d8d',
+  Software: '#8b7cff',
+  Fitness: '#ff8a3d',
+  Kids: '#3dc8ff',
+  Learning: '#ffd645',
+  Utilities: '#4ff5c0',
+  Insurance: '#2dd4bf',
+  Other: '#c4b5fd',
+};
+
+export function Avatar({ name, category }) {
   const letters = name.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase();
-  return <div className="av">{letters}</div>;
+  if (!category) return <div className="av">{letters}</div>;
+  return <div className={`av-cat cat-${category}`}>{letters}</div>;
+}
+
+/**
+ * Category ring. Each slice carries that category's hue, so the breakdown reads
+ * as a picture first and a number second.
+ */
+export function Ring({ slices, total, centerLabel, centerValue, size = 176, onSlice }) {
+  const r = size / 2 - 14;
+  const circ = 2 * Math.PI * r;
+  let offset = 0;
+  return (
+    <div className="ring-wrap" style={{ width: size, height: size }}>
+      <svg width={size} height={size} role="img" aria-label={`${centerLabel}: ${centerValue}`}>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="13" />
+        {slices.map((s) => {
+          const frac = total > 0 ? s.value / total : 0;
+          const len = circ * frac;
+          const el = (
+            <circle
+              key={s.label}
+              className="ring-seg"
+              cx={size / 2}
+              cy={size / 2}
+              r={r}
+              fill="none"
+              stroke={s.color}
+              strokeWidth="13"
+              strokeLinecap="butt"
+              strokeDasharray={`${Math.max(0, len - 2)} ${circ}`}
+              strokeDashoffset={-offset}
+              onClick={() => onSlice && onSlice(s)}
+              style={{ filter: `drop-shadow(0 0 7px ${s.color}aa)` }}
+            >
+              <title>{`${s.label}: ${s.display}`}</title>
+            </circle>
+          );
+          offset += len;
+          return el;
+        })}
+      </svg>
+      <div className="ring-center">
+        <div className="eyebrow">{centerLabel}</div>
+        <div className="figure lg" style={{ marginTop: 5 }}>{centerValue}</div>
+      </div>
+    </div>
+  );
+}
+
+export function Tile({ label, value, note, glow, onClick, valueColor }) {
+  const style = { '--glow': glow ? `${glow}30` : 'transparent', '--edge': glow || 'transparent' };
+  const inner = (
+    <>
+      <div className="tlabel">{label}</div>
+      <div className="tval" style={valueColor ? { color: valueColor } : undefined}>{value}</div>
+      {note ? <div className="tnote">{note}</div> : null}
+    </>
+  );
+  if (onClick) return <button type="button" className="tile" style={style} onClick={onClick}>{inner}</button>;
+  return <div className="tile" style={style}>{inner}</div>;
 }
 
 export function Bar({ pct, tone = 'emerald' }) {

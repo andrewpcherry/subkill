@@ -1,24 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowRight, CalendarDays, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { ArrowRight, CalendarDays, CheckCircle2 } from 'lucide-react';
 import { useStore } from '../store.jsx';
-import { Card, Chip, Money, WhyPopover } from '../ui.jsx';
+import { CATEGORY_COLOR, Card, Chip, Money, Ring, Tile, WhyPopover } from '../ui.jsx';
 import {
   annualizedCommitment, candidateAnnualReduction, dataFreshness, decisionQueue,
-  formatMoney, longDate, monthlyCommitment, nextReviewDate, relativeDay,
-  scheduledInWindow, shortDate, topDecisions, trackedItems,
+  formatMoney, isActive, longDate, monthlyCommitment, monthlyEquivalent,
+  nextReviewDate, relativeDay, scheduledInWindow, shortDate, topDecisions, trackedItems,
 } from '../state/derive.ts';
-
-function LedgerRow({ label, value, note }) {
-  return (
-    <div className="ledger-row">
-      <div className="grow">
-        <div className="lbl">{label}</div>
-        <div className="note">{note}</div>
-      </div>
-      <span className="val num">{value}</span>
-    </div>
-  );
-}
 
 function greeting(nowISO) {
   const h = new Date(nowISO).getUTCHours();
@@ -39,7 +27,7 @@ function TimelineMini({ state, onOpen }) {
 
   const days = useMemo(() => {
     const start = Date.parse(state.nowISO);
-    const buckets = Array.from({ length: 30 }, (_, i) => ({ i, cents: 0, hl: 0, label: '' }));
+    const buckets = Array.from({ length: 30 }, (_, i) => ({ i, cents: 0, hl: 0 }));
     for (const o of rows) {
       const idx = Math.min(29, Math.max(0, Math.floor((Date.parse(o.dueAt) - start) / 86400000)));
       buckets[idx].cents += o.amountCents;
@@ -54,10 +42,10 @@ function TimelineMini({ state, onOpen }) {
   const shown = resolved ? total - flagged : total;
 
   return (
-    <Card className="pad-lg">
+    <Card className="hero pad-lg">
       <div className="eyebrow">Scheduled · next 30 days</div>
-      <div className="figure xl" style={{ marginTop: 8 }}>{formatMoney(shown)}</div>
-      <div className="row between wrap gap-sm" style={{ marginTop: 10 }}>
+      <div className="figure xl" style={{ marginTop: 10 }}>{formatMoney(shown)}</div>
+      <div className="row between wrap gap-sm" style={{ marginTop: 12 }}>
         <span className="small muted">of recurring payments</span>
         <button
           type="button"
@@ -69,12 +57,16 @@ function TimelineMini({ state, onOpen }) {
         </button>
       </div>
 
-      <div className="mini" style={{ marginTop: 18 }}>
-        <div className="mini-track" role="img" aria-label={`Scheduled recurring payments for the next 30 days, totalling ${formatMoney(shown)}`}>
+      <div className="mini" style={{ marginTop: 20 }}>
+        <div
+          className="mini-track"
+          role="img"
+          aria-label={`Scheduled recurring payments for the next 30 days, totalling ${formatMoney(shown)}`}
+        >
           {days.map((d) => {
             const value = resolved ? d.cents - d.hl : d.cents;
-            const h = d.cents === 0 ? 3 : Math.max(4, Math.round((value / max) * 88));
-            const cls = d.hl > 0 ? (resolved ? 'gone' : 'hl') : d.cents > 0 ? 'kept' : '';
+            const h = d.cents === 0 ? 3 : Math.max(5, Math.round((value / max) * 90));
+            const cls = d.hl > 0 ? (resolved ? 'gone' : 'hl') : '';
             return <div key={d.i} className={`mini-bar ${cls}`} style={{ height: `${h}px` }} />;
           })}
         </div>
@@ -84,20 +76,61 @@ function TimelineMini({ state, onOpen }) {
         </div>
       </div>
 
-      <div className="row gap-sm wrap" style={{ marginTop: 12 }}>
+      <div className="row gap-sm wrap" style={{ marginTop: 14 }}>
         <Chip tone="amber">2 decisions in the next 24 hours</Chip>
-        {resolved ? (
-          <Chip tone="emerald">
-            <Money cents={flagged} /> of scheduled payments removed
-          </Chip>
-        ) : null}
+        {resolved ? <Chip tone="emerald"><Money cents={flagged} /> removed</Chip> : null}
         <button type="button" className="btn ghost sm" onClick={onOpen} style={{ marginLeft: 'auto' }}>
-          Open Money Preview <ArrowRight size={14} />
+          Money Preview <ArrowRight size={14} />
         </button>
       </div>
-      <p className="tiny dim" style={{ marginTop: 10 }}>
+      <p className="tiny dim" style={{ marginTop: 11 }}>
         Scheduled recurring payments only, not a balance forecast.
       </p>
+    </Card>
+  );
+}
+
+/** Where the monthly commitment actually goes, by category. */
+function Breakdown({ state, onPick }) {
+  const slices = useMemo(() => {
+    const totals = new Map();
+    for (const p of state.payments) {
+      if (!isActive(p) || p.kind === 'trial') continue;
+      totals.set(p.category, (totals.get(p.category) || 0) + monthlyEquivalent(p));
+    }
+    return [...totals.entries()]
+      .map(([label, value]) => ({
+        label,
+        value,
+        color: CATEGORY_COLOR[label] || '#c4b5fd',
+        display: formatMoney(value),
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [state.payments]);
+
+  const total = slices.reduce((a, s) => a + s.value, 0);
+
+  return (
+    <Card className="hero pad-lg">
+      <div className="eyebrow" style={{ marginBottom: 16 }}>Where it goes each month</div>
+      <div className="row gap-lg wrap" style={{ alignItems: 'center', justifyContent: 'center' }}>
+        <Ring
+          slices={slices}
+          total={total}
+          centerLabel="Per month"
+          centerValue={formatMoney(total, { cents: false })}
+          onSlice={(s) => onPick(s.label)}
+        />
+        <div className="legend">
+          {slices.map((s) => (
+            <button key={s.label} type="button" className={`legend-row cat-${s.label}`} onClick={() => onPick(s.label)}>
+              <span className="dotc" />
+              <span className="lname truncate">{s.label}</span>
+              <span className="lval">{s.display}</span>
+            </button>
+          ))}
+        </div>
+      </div>
     </Card>
   );
 }
@@ -119,9 +152,9 @@ export default function Home() {
 
   return (
     <>
-      <header style={{ marginBottom: 18 }}>
+      <header style={{ marginBottom: 20 }}>
         <h1>{greeting(state.nowISO)}, Nancy</h1>
-        <p className="muted" style={{ marginTop: 4 }}>
+        <p className="muted" style={{ marginTop: 6 }}>
           {top.length ? "Here's what needs your attention." : 'Nothing needs your decision right now.'}
         </p>
       </header>
@@ -143,7 +176,7 @@ export default function Home() {
         </div>
 
         {top.length ? (
-          <div>
+          <div className="stack">
             {top.map((card, i) => (
               <div className={`decision ${card.tone}`} key={card.id}>
                 <div className="idx">{String(i + 1).padStart(2, '0')}</div>
@@ -152,8 +185,8 @@ export default function Home() {
                     <h3 className="grow">{card.title}</h3>
                     <Money cents={card.amountCents} className="small dim" />
                   </div>
-                  <p className="small muted" style={{ marginTop: 4 }}>{card.detail}</p>
-                  <div className="row gap-sm wrap" style={{ marginTop: 12 }}>
+                  <p className="small muted" style={{ marginTop: 5 }}>{card.detail}</p>
+                  <div className="row gap-sm wrap" style={{ marginTop: 13 }}>
                     <button type="button" className="btn sm primary" onClick={() => openDecision(card)}>
                       {card.action}
                     </button>
@@ -167,23 +200,19 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          <Card className="pad-lg">
+          <Card className="hero pad-lg">
             <div className="row gap-sm" style={{ alignItems: 'flex-start' }}>
-              <CheckCircle2 size={19} color="var(--emerald)" style={{ marginTop: 2, flex: 'none' }} />
+              <CheckCircle2 size={20} color="var(--mint)" style={{ marginTop: 2, flex: 'none' }} />
               <div>
                 <h3>Nothing needs your decision right now.</h3>
-                <p className="small muted" style={{ marginTop: 4 }}>
+                <p className="small muted" style={{ marginTop: 5 }}>
                   {review
                     ? `The next thing worth reviewing is on ${longDate(review)}. SubKill keeps watching until then.`
                     : 'SubKill keeps watching your recurring payments.'}
                 </p>
-                <div className="btnrow" style={{ marginTop: 12 }}>
-                  <button type="button" className="btn sm" onClick={() => go('money', 'timeline')}>
-                    View timeline
-                  </button>
-                  <button type="button" className="btn sm ghost" onClick={() => go('savings')}>
-                    See what changed
-                  </button>
+                <div className="btnrow" style={{ marginTop: 14 }}>
+                  <button type="button" className="btn sm" onClick={() => go('money', 'timeline')}>View timeline</button>
+                  <button type="button" className="btn sm ghost" onClick={() => go('savings')}>See what changed</button>
                 </div>
               </div>
             </div>
@@ -192,55 +221,62 @@ export default function Home() {
       </section>
 
       <section className="section">
-        <button type="button" className="lrow" onClick={() => go('money', 'timeline')}>
-          <CalendarDays size={17} color="var(--text-3)" style={{ flex: 'none' }} />
-          <div className="grow">
-            <div style={{ fontWeight: 550 }}>Everything else is on your timeline</div>
-            <div className="tiny dim">
-              {upcoming.length} scheduled recurring payments in the next 30 days. Next:{' '}
-              {upcoming[0] ? `${upcoming[0].paymentId.replace('p_', '')} ${relativeDay(state, upcoming[0].dueAt).toLowerCase()}` : 'none'}
-            </div>
-          </div>
-          <ArrowRight size={15} color="var(--text-3)" />
-        </button>
+        <Breakdown state={state} onPick={() => go('money', 'list')} />
       </section>
 
       <section className="section">
         <div className="section-head"><h2>Where you stand</h2></div>
-        <div className="ledger">
-          <LedgerRow
-            label="Active recurring commitment"
+        <div className="tiles">
+          <Tile
+            label="Committed"
             value={formatMoney(monthlyCommitment(state))}
-            note="Per month equivalent. Annual plans spread across 12 months; unconverted trials are not counted."
+            note="Per month equivalent. Trials not counted."
+            glow="#8b7cff"
           />
-          <LedgerRow
-            label="Annualized commitment"
+          <Tile
+            label="Annualized"
             value={formatMoney(annualizedCommitment(state), { cents: false })}
-            note="At today's rates. Not a guarantee of next year's bills."
+            note="At today's rates, not a guarantee."
+            glow="#3dc8ff"
           />
-          <LedgerRow
-            label="Candidate reductions"
-            value={`${formatMoney(candidateAnnualReduction(state))}/yr`}
-            note="Proposed possibilities you have not acted on. Not savings."
+          <Tile
+            label="Candidates"
+            value={formatMoney(candidateAnnualReduction(state), { cents: false })}
+            note="Per year. Proposals, not savings."
+            glow="#4ff5c0"
+            valueColor="var(--mint)"
           />
-          <LedgerRow
-            label="Decisions awaiting you"
+          <Tile
+            label="Awaiting you"
             value={String(all.length)}
-            note={all.length ? 'Each one has evidence and a recommended next step.' : 'Your queue is clear.'}
+            note={all.length ? 'Each has evidence and a next step.' : 'Your queue is clear.'}
+            glow="#ffc24d"
+            valueColor={all.length ? 'var(--amber)' : undefined}
+            onClick={() => go('alerts')}
           />
-          <button type="button" className="ledger-row" onClick={() => go('money', 'list')}>
-            <div className="grow">
-              <div className="lbl row gap-sm" style={{ alignItems: 'center' }}>
-                <ShieldCheck size={13} color="var(--emerald)" />
-                Monitoring coverage
-              </div>
-              <div className="note">
-                {items.subscriptions} subscriptions · {items.bills} bills · {items.trials} trials · {fresh.label}
-              </div>
-            </div>
-            <span className="val num">{items.total}</span>
-          </button>
         </div>
+
+        <button type="button" className="lrow" style={{ marginTop: 12 }} onClick={() => go('money', 'list')}>
+          <CalendarDays size={17} color="var(--text-3)" style={{ flex: 'none' }} />
+          <div className="grow">
+            <div className="small" style={{ fontWeight: 600 }}>{items.total} recurring items tracked</div>
+            <div className="tiny dim">
+              {items.subscriptions} subscriptions · {items.bills} bills · {items.trials} trials · {fresh.label}
+            </div>
+          </div>
+          <ArrowRight size={15} color="var(--text-3)" />
+        </button>
+
+        <button type="button" className="lrow" style={{ marginTop: 7 }} onClick={() => go('money', 'timeline')}>
+          <div className="grow">
+            <div className="small" style={{ fontWeight: 600 }}>Everything else is on your timeline</div>
+            <div className="tiny dim">
+              {upcoming.length} scheduled payments in the next 30 days
+              {upcoming[0] ? ` · next ${relativeDay(state, upcoming[0].dueAt).toLowerCase()}` : ''}
+            </div>
+          </div>
+          <ArrowRight size={15} color="var(--text-3)" />
+        </button>
       </section>
     </>
   );
