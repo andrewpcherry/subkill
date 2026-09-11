@@ -1,6 +1,9 @@
 import React, { useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
 import { formatMoney } from './state/derive.ts';
+import { MerchantMark } from './brands.jsx';
+
+export { MerchantMark };
 
 /**
  * The mark: a recurring cycle, cut and slipped apart.
@@ -275,10 +278,8 @@ export const CATEGORY_COLOR = {
   Other: '#c4b5fd',
 };
 
-export function Avatar({ name, category }) {
-  const letters = name.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase();
-  if (!category) return <div className="av">{letters}</div>;
-  return <div className={`av-cat cat-${category}`}>{letters}</div>;
+export function Avatar({ name, size = 36 }) {
+  return <MerchantMark name={name} size={size} />;
 }
 
 /**

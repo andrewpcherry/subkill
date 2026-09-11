@@ -57,7 +57,7 @@ export default function Alerts() {
         ]}
       />
 
-      <div className="stack" style={{ marginTop: 16 }}>
+      <div className="stack hued" style={{ marginTop: 16 }}>
         {shown.length === 0 ? (
           <Empty icon="✓" title="Nothing in this view" body="Try another filter, or come back after the next scheduled review." />
         ) : (

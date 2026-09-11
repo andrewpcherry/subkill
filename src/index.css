@@ -869,6 +869,87 @@ button.tile:hover::before { opacity: 0.85; }
 }
 @media (prefers-reduced-motion: reduce) { .btn.primary::after { display: none; } }
 
+/* ---------------------------------------------------------------- per-screen accent
+   Every destination owns a pair of hues. Headings, eyebrows, section rules and
+   row edges pick them up, so no page is monochrome. */
+
+[data-screen] { --accent: #4ff5c0; --accent2: #7c5cff; }
+[data-screen='home']     { --accent: #4ff5c0; --accent2: #7c5cff; }
+[data-screen='money']    { --accent: #8b7cff; --accent2: #3dc8ff; }
+[data-screen='alerts']   { --accent: #ffc24d; --accent2: #ff6b81; }
+[data-screen='guardian'] { --accent: #3dc8ff; --accent2: #4ff5c0; }
+[data-screen='savings']  { --accent: #4ff5c0; --accent2: #ffd645; }
+[data-screen='family']   { --accent: #ff4d8d; --accent2: #a78bfa; }
+[data-screen='report']   { --accent: #2dd4bf; --accent2: #3dc8ff; }
+[data-screen='pricing']  { --accent: #a78bfa; --accent2: #ff4d8d; }
+[data-screen='settings'] { --accent: #c4b5fd; --accent2: #3dc8ff; }
+[data-screen='roadmap']  { --accent: #ffd645; --accent2: #ff8a3d; }
+
+/* Page titles carry the screen's colour. */
+[data-screen] > header h1,
+[data-screen] .section-head h2 {
+  background: linear-gradient(96deg, #ffffff 0%, var(--accent) 62%, var(--accent2) 100%);
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent; -webkit-text-fill-color: transparent;
+}
+[data-screen] .eyebrow { color: var(--accent); opacity: 0.92; }
+
+/* A coloured tick before every section title. */
+[data-screen] .section-head::before {
+  content: ''; width: 3px; height: 17px; border-radius: 2px; flex: none;
+  background: linear-gradient(180deg, var(--accent), var(--accent2));
+  box-shadow: 0 0 12px var(--accent);
+}
+
+/* Tinted glass per screen so the surfaces are never neutral grey. */
+[data-screen] .card,
+[data-screen] .ledger,
+[data-screen] .billdoc {
+  background:
+    linear-gradient(158deg, color-mix(in srgb, var(--accent) 9%, transparent), transparent 62%),
+    var(--glass);
+}
+[data-screen] .card.hero {
+  background:
+    linear-gradient(158deg, color-mix(in srgb, var(--accent) 14%, transparent), transparent 58%),
+    linear-gradient(158deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035));
+}
+[data-screen] .card.hero::after {
+  background: radial-gradient(70% 50% at 8% -10%, color-mix(in srgb, var(--accent) 32%, transparent), transparent 62%);
+}
+
+/* Rows cycle through the full category spectrum rather than sitting grey. */
+.hued > *:nth-child(8n+1) { --rowc: #4ff5c0; }
+.hued > *:nth-child(8n+2) { --rowc: #8b7cff; }
+.hued > *:nth-child(8n+3) { --rowc: #ff4d8d; }
+.hued > *:nth-child(8n+4) { --rowc: #3dc8ff; }
+.hued > *:nth-child(8n+5) { --rowc: #ffd645; }
+.hued > *:nth-child(8n+6) { --rowc: #ff8a3d; }
+.hued > *:nth-child(8n+7) { --rowc: #2dd4bf; }
+.hued > *:nth-child(8n+8) { --rowc: #c4b5fd; }
+.hued > * {
+  position: relative; overflow: hidden;
+  border-left: 2px solid var(--rowc, var(--accent));
+  background:
+    linear-gradient(96deg, color-mix(in srgb, var(--rowc, var(--accent)) 13%, transparent), transparent 46%),
+    var(--glass) !important;
+}
+.hued > *::after {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+  background: var(--rowc, var(--accent)); box-shadow: 0 0 14px var(--rowc, var(--accent));
+}
+
+/* Money values inherit meaning-colour instead of plain white. */
+.val-pos { color: var(--mint); }
+.val-neg { color: var(--red); }
+
+/* ---------------------------------------------------------------- louder type */
+
+h1 { font-variation-settings: 'wdth' 92; font-weight: 800; }
+h2 { font-variation-settings: 'wdth' 94; }
+.figure { font-variation-settings: 'wdth' 88; }
+.tile .tval { font-variation-settings: 'wdth' 88; }
+
 /* ------------------------------------------- responsive overrides (keep last) */
 
 @media (min-width: 1024px) {

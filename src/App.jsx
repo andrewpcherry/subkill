@@ -333,7 +333,7 @@ function Shell() {
           </button>
         </header>
 
-        <main className="content" id="main">
+        <main className="content" id="main" data-screen={route.tab}>
           {screen}
           <MobileMore />
         </main>

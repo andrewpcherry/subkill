@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Download, Printer } from 'lucide-react';
 import { downloadFile, useStore } from '../store.jsx';
-import { Card, Chip, Money, Sheet, Toggle } from '../ui.jsx';
+import { Card, Chip, MerchantMark, Money, Sheet, Toggle } from '../ui.jsx';
 import {
   activeBills, activeSubscriptions, activeTrials, annualized, childMonthlyTotal,
   dataFreshness, formatMoney, isActive, longDate, monthlyEquivalent, monthlyReport,
@@ -13,7 +13,12 @@ import { SUBKILL_PREMIUM_CENTS } from '../state/seed.ts';
 
 export function Family() {
   const { state, run, notify, setSheet } = useStore();
-  const shared = state.payments.filter((p) => isActive(p) && (p.usedBy.length > 0 || p.owner === 'household' || p.owner === 'brian'));
+  // Genuinely shared: the household carries it, more than one person uses it,
+  // or someone other than the owner does. An item Nancy owns and only Nancy
+  // uses is hers, not a shared expense.
+  const shared = state.payments.filter(
+    (p) => isActive(p) && (p.owner === 'household' || p.usedBy.length > 1 || p.usedBy.some((u) => u !== p.owner)),
+  );
   const unclaimed = state.payments.filter((p) => isActive(p) && p.usedBy.length === 0 && p.owner !== 'household');
   const spotify = paymentById(state, 'p_spotify');
   const benefit = state.evidence.find((e) => e.id === 'ev_mobileco_benefit');
@@ -55,6 +60,7 @@ export function Family() {
           {shared.map((p) => (
             <Card key={p.id}>
               <div className="row between gap-sm wrap">
+                <MerchantMark name={p.merchant} size={32} />
                 <div className="grow">
                   <div style={{ fontWeight: 550 }}>{p.merchant}</div>
                   <div className="tiny dim" style={{ marginTop: 2 }}>
@@ -543,7 +549,7 @@ export function Roadmap() {
           Concepts, not features. Each one needs real integrations and validation before it could work.
         </p>
       </header>
-      <div className="stack-sm">
+      <div className="stack-sm hued">
         {ROADMAP.map((t) => (
           <button key={t.title} type="button" className="lrow" onClick={() => setSheet({ kind: 'roadmap', topic: t })}>
             <div className="grow">

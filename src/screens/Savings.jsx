@@ -81,7 +81,7 @@ export default function Savings() {
 
       <div className="section">
         <div className="section-head"><h2>How the money breaks down</h2></div>
-        <div className="stack-sm">
+        <div className="stack-sm hued">
           <Row
             label="Candidate annualized reductions"
             value={formatMoney(candidate, { cents: false })}
