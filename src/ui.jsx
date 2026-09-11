@@ -6,12 +6,10 @@ import { MerchantMark } from './brands.jsx';
 export { MerchantMark };
 
 /**
- * The mark: a recurring cycle, cut and slipped apart.
- * Two arcs of one circle with a diagonal break, the halves offset along the cut.
+ * The mark: a guardian's shield, opened by a diagonal cut.
+ * Protection, and the act of cancelling. Violet right, mint left, mint cut.
  */
 export function Logo({ size = 28, id = 'lg' }) {
-  const CIRC = 62.83; // 2πr at r=10
-  const ARC = 25.6;
   return (
     <svg
       width={size}
@@ -31,20 +29,18 @@ export function Logo({ size = 28, id = 'lg' }) {
           <stop offset="100%" stopColor="#7c5cff" />
         </linearGradient>
       </defs>
-      <g transform="rotate(-38 16 16)">
-        <circle
-          cx="16" cy="16" r="10" fill="none"
-          stroke={`url(#${id}-a)`} strokeWidth="3.7" strokeLinecap="round"
-          strokeDasharray={`${ARC} ${CIRC}`} strokeDashoffset="0"
-          transform="translate(-1.35 0)"
-        />
-        <circle
-          cx="16" cy="16" r="10" fill="none"
-          stroke={`url(#${id}-b)`} strokeWidth="3.7" strokeLinecap="round"
-          strokeDasharray={`${ARC} ${CIRC}`} strokeDashoffset={-CIRC / 2}
-          transform="translate(1.35 0)"
-        />
-      </g>
+      <path
+        d="M16 3.2 27 7v8.4c0 6.6-4.6 11.2-11 13.4"
+        stroke={`url(#${id}-b)`} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+      />
+      <path
+        d="M16 3.2 5 7v8.4c0 3.1 1 5.9 2.7 8.2"
+        stroke={`url(#${id}-a)`} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+      />
+      <path
+        d="M10.6 26.4 20.4 16"
+        stroke={`url(#${id}-a)`} strokeWidth="3" strokeLinecap="round"
+      />
     </svg>
   );
 }
