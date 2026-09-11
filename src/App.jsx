@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Bell, ChevronRight, CreditCard, Home as HomeIcon, PiggyBank,
+  Bell, ChevronRight, CreditCard, Home as HomeIcon, Mail, PiggyBank,
   Settings as SettingsIcon, ShieldCheck, Sliders, Users, Wallet, X,
 } from 'lucide-react';
 import { StoreProvider, useStore } from './store.jsx';
@@ -10,6 +10,7 @@ import MoneyScreen from './screens/Money.jsx';
 import Alerts from './screens/Alerts.jsx';
 import Guardian from './screens/Guardian.jsx';
 import Savings from './screens/Savings.jsx';
+import Discovery from './screens/Discovery.jsx';
 import SheetHost from './screens/Sheets.jsx';
 import { Family, Pricing, Report, Roadmap, Settings } from './screens/More.jsx';
 import { alertCounts, decisionQueue, longDate } from './state/derive.ts';
@@ -23,6 +24,7 @@ const PRIMARY = [
 ];
 
 const SECONDARY = [
+  { id: 'discovery', label: 'Inbox scan', Icon: Mail },
   { id: 'family', label: 'Family', Icon: Users },
   { id: 'report', label: 'Monthly report', Icon: CreditCard },
   { id: 'pricing', label: 'Pricing', Icon: CreditCard },
@@ -267,6 +269,7 @@ function Shell() {
     alerts: <Alerts />,
     guardian: <Guardian />,
     savings: <Savings />,
+    discovery: <Discovery />,
     family: <Family />,
     report: <Report />,
     pricing: <Pricing />,
@@ -382,7 +385,7 @@ function Shell() {
 /** Secondary destinations on small screens, where the sidebar is hidden. */
 function MobileMore() {
   const { route, go } = useStore();
-  if (['family', 'report', 'pricing', 'settings', 'roadmap'].includes(route.tab)) return null;
+  if (['discovery', 'family', 'report', 'pricing', 'settings', 'roadmap'].includes(route.tab)) return null;
   return (
     <div className="section mobile-only">
       <div className="nav-sep" style={{ margin: '20px 0 12px' }} />

@@ -41,6 +41,11 @@ export const BRAND = {
   'Auto Insurance': G('#8b7cff', '#5f4fd6'),
   'Home Insurance': G('#4ff5c0', '#17d9a0'),
   SubKill: G('#4ff5c0', '#7c5cff'),
+  Audible: G('#f8991c', '#d0760a'),
+  Blinkist: G('#2ceb99', '#14b877'),
+  MasterClass: G('#e2333f', '#a51824'),
+  Strava: G('#fc5200', '#c43f00'),
+  Notion: G('#5b6270', '#373c47'),
 };
 
 /** Custom glyphs for the most recognisable shapes. 24x24 viewBox, currentColor. */
@@ -121,6 +126,128 @@ const GLYPH = {
   ),
   'Gridline Power': (
     <path d="M13.4 2.6 6 13.4h4.6L10 21.4l7.6-11.2H13l.4-7.6Z" fill="currentColor" />
+  ),
+  'Roblox Premium': (
+    <g fill="currentColor">
+      <path d="M7.2 2.6 21.4 6.4l-3.8 14.2L3.4 16.8 7.2 2.6Zm2.4 6 -1.1 4.2 4.2 1.1 1.1-4.2-4.2-1.1Z" fillRule="evenodd" />
+    </g>
+  ),
+  ABCmouse: (
+    <g fill="currentColor">
+      <circle cx="7.6" cy="7.4" r="2.8" />
+      <circle cx="16.4" cy="7.4" r="2.8" />
+      <path d="M12 9.2c4.2 0 7.4 2.9 7.4 6.2S16.2 21 12 21s-7.4-2.3-7.4-5.6S7.8 9.2 12 9.2Z" opacity=".85" />
+      <circle cx="12" cy="14.4" r="1.3" fill="#fff" opacity=".9" />
+    </g>
+  ),
+  Headspace: (
+    <g>
+      <circle cx="12" cy="13.4" r="8.6" fill="currentColor" opacity=".9" />
+      <path d="M5.6 10.6c3.4-4.6 9.4-4.6 12.8 0" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" opacity=".85" />
+    </g>
+  ),
+  CloudVault: (
+    <g>
+      <path d="M8 18.6a4.4 4.4 0 0 1-.5-8.8 5.6 5.6 0 0 1 10.7 1.3A3.8 3.8 0 0 1 17.6 18.6H8Z" fill="currentColor" />
+      <circle cx="12.4" cy="14.6" r="1.7" fill="#fff" opacity=".85" />
+    </g>
+  ),
+  Readly: (
+    <g fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round">
+      <path d="M12 7.2C10.2 5.6 7.6 5 4.6 5.2v12.4c3-.2 5.6.4 7.4 2 1.8-1.6 4.4-2.2 7.4-2V5.2c-3-.2-5.6.4-7.4 2Z" />
+      <path d="M12 7.2v12.4" strokeLinecap="round" />
+    </g>
+  ),
+  FitCoach: (
+    <g stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" fill="none">
+      <path d="M4 12h16" />
+      <path d="M6.6 8.6v6.8M9.2 7v10M14.8 7v10M17.4 8.6v6.8" />
+    </g>
+  ),
+  LanguageLab: (
+    <g fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round">
+      <path d="M3.6 6.4h11v8h-5.6L5.8 17.4v-3h-2.2v-8Z" />
+      <path d="M17 10.2h3.4v7h-1.6v2.6l-2.6-2.6h-3.4v-2.4" />
+    </g>
+  ),
+  NewsDaily: (
+    <g fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+      <path d="M4.4 5.4h12.2v13.2H6.2a1.8 1.8 0 0 1-1.8-1.8V5.4Z" strokeLinejoin="round" />
+      <path d="M16.6 9h3v7.8a1.8 1.8 0 0 1-3 1.3" strokeLinejoin="round" />
+      <path d="M7.2 8.6h6.6M7.2 11.6h6.6M7.2 14.6h4" />
+    </g>
+  ),
+  KidsLearn: (
+    <g fill="currentColor">
+      <path d="M12 2.6 14.6 8l6 .9-4.3 4.2 1 6-5.3-2.8L6.7 19l1-6L3.4 8.9 9.4 8 12 2.6Z" />
+    </g>
+  ),
+  PhotoBox: (
+    <g fill="none" stroke="currentColor" strokeWidth="1.9">
+      <path d="M3.6 8.4h3.8l1.6-2.4h6l1.6 2.4h3.8v10.2H3.6V8.4Z" strokeLinejoin="round" />
+      <circle cx="12" cy="13.4" r="3.4" />
+    </g>
+  ),
+  'Canva Pro': (
+    <g fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
+      <circle cx="12" cy="12" r="8.4" opacity=".35" />
+      <path d="M15.4 8.4a5 5 0 1 0 .6 7" />
+    </g>
+  ),
+  'Health Insurance': (
+    <g fill="currentColor">
+      <path d="M9.8 3.4h4.4v6.4h6.4v4.4h-6.4v6.4H9.8v-6.4H3.4V9.8h6.4V3.4Z" />
+    </g>
+  ),
+  'Auto Insurance': (
+    <g fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round">
+      <path d="M3.6 15.4v-2.6l2-4.6a2 2 0 0 1 1.8-1.2h9.2a2 2 0 0 1 1.8 1.2l2 4.6v2.6H3.6Z" />
+      <path d="M3.6 15.4h16.8v2.4h-3v-2.4M6.6 17.8v-2.4" strokeLinecap="round" />
+      <circle cx="7.6" cy="12.6" r="1" fill="currentColor" />
+      <circle cx="16.4" cy="12.6" r="1" fill="currentColor" />
+    </g>
+  ),
+  'Home Insurance': (
+    <g fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round">
+      <path d="M3.6 11.4 12 4.2l8.4 7.2" strokeLinecap="round" />
+      <path d="M5.8 13.2v6.6h12.4v-6.6" />
+      <path d="M10.2 19.8v-4.4h3.6v4.4" />
+    </g>
+  ),
+  SubKill: (
+    <g fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3.4 20 6.2v6.2c0 4.8-3.4 8.2-8 9.8" />
+      <path d="M12 3.4 4 6.2v6.2c0 2.3.8 4.3 2 5.9" />
+      <path d="M8 20 15.2 12.4" />
+    </g>
+  ),
+  Audible: (
+    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M4 10.4v3.2M7.6 7.8v8.4M11.2 5.4v13.2M14.8 8.6v6.8M18.4 11v2" />
+    </g>
+  ),
+  Blinkist: (
+    <g fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9.4 18.4h5.2M10.2 21h3.6" />
+      <path d="M12 3.2a6 6 0 0 1 3.6 10.8c-.6.5-.9 1-.9 1.6H9.3c0-.6-.3-1.1-.9-1.6A6 6 0 0 1 12 3.2Z" />
+    </g>
+  ),
+  MasterClass: (
+    <g fill="currentColor">
+      <path d="M4.4 4.6 20 12 4.4 19.4V4.6Z" />
+    </g>
+  ),
+  Strava: (
+    <g fill="currentColor">
+      <path d="M10.4 2.6 3.6 15.2h4L10.4 10l2.8 5.2h4L10.4 2.6Z" />
+      <path d="M15.2 15.2 13.6 18.2 12 15.2H9.2l4.4 7.2 4.4-7.2h-2.8Z" opacity=".75" />
+    </g>
+  ),
+  Notion: (
+    <g fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round">
+      <rect x="4" y="4" width="16" height="16" rx="2.6" />
+      <path d="M9 16.4V8l6 8.4V8" strokeLinecap="round" />
+    </g>
   ),
 };
 

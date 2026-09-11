@@ -10,8 +10,8 @@
 
 import type { ActionCase, Cents, DemoState, LedgerEvent, Obligation, Payment, Txn } from './seed.ts';
 import {
-  DAY_MS, SUBKILL_PREMIUM_CENTS, buildObligations, createInitialState,
-  obligationId, subkillPayment,
+  DAY_MS, SCAN_MESSAGE_COUNT, SUBKILL_PREMIUM_CENTS, buildObligations,
+  createInitialState, obligationId, subkillPayment,
 } from './seed.ts';
 import { dataFreshness, formatMoney, longDate, monthlyEquivalent, paymentById } from './derive.ts';
 
@@ -602,6 +602,136 @@ export function setConnectionState(
     const coveredBySync = Date.parse(e.occurredAt) <= cutoff;
     e.status = fresh.canVerifyAbsence || coveredBySync ? 'confirmed' : 'awaiting_verification';
   }
+  return s;
+}
+
+// ---------------------------------------------------------------------------
+// Inbox discovery
+// ---------------------------------------------------------------------------
+
+export function startScan(state: DemoState): DemoState {
+  const s = clone(state);
+  if (s.scan.status === 'running') return state;
+  s.scan.status = 'running';
+  return s;
+}
+
+/** Completing the scan reveals findings. It never adds anything to your list. */
+export function completeScan(state: DemoState): DemoState {
+  const s = clone(state);
+  s.scan.status = 'complete';
+  s.scan.lastRunAt = s.nowISO;
+  s.scan.messagesScanned = SCAN_MESSAGE_COUNT;
+  const inbox = s.connections.find((c) => c.id === 'cx_email');
+  if (inbox && inbox.state === 'simulated_healthy') inbox.lastSyncAt = s.nowISO;
+  return s;
+}
+
+/**
+ * Confirming a discovery turns it into a tracked record. Only here does a
+ * finding start counting toward any total.
+ */
+export function addDiscovery(state: DemoState, discoveryId: string): DemoState {
+  const s = clone(state);
+  const d = s.discoveries.find((x) => x.id === discoveryId);
+  if (!d || d.status !== 'open' || d.verdict === 'already_tracked') return state;
+  if (s.payments.some((p) => p.id === `p_${discoveryId}`)) return state; // idempotent
+
+  const nextChargeAt = d.nextChargeAt
+    ?? new Date(Date.parse(s.nowISO) + 30 * DAY_MS).toISOString();
+
+  const p: Payment = {
+    id: `p_${discoveryId}`,
+    merchant: d.merchant,
+    plan: d.plan,
+    kind: d.isTrial ? 'trial' : 'subscription',
+    category: d.category,
+    amountCents: d.amountCents,
+    interval: d.interval,
+    status: 'active',
+    owner: 'nancy',
+    usedBy: [],
+    paymentSource: 'Visa ···4412',
+    billingChannel: 'direct',
+    nextChargeAt,
+    essential: false,
+    favorite: false,
+    usageReport: null,
+    lastUsedDaysAgo: null,
+    variableEstimate: false,
+    pauseOption: null,
+    downgradeOption: null,
+    contract: null,
+    accessThrough: d.isTrial ? nextChargeAt : null,
+    cancellationGuide: [
+      'Open the account page and sign in.',
+      'Find the plan or membership section.',
+      'Choose to end the plan, then confirm on the review step.',
+    ],
+    providerUrl: null,
+    trial: d.isTrial
+      ? {
+        convertsAt: nextChargeAt,
+        decisionDeadlineAt: nextChargeAt,
+        firstChargeCents: d.amountCents,
+        laterCents: d.amountCents,
+        accessEndsImmediately: false,
+      }
+      : null,
+    addedByUser: true,
+    archivedNote: null,
+  };
+
+  s.payments.push(p);
+  s.obligations.push(...buildObligations([p]));
+
+  // The receipts that proved it become evidence attached to the new record.
+  s.evidence.push({
+    id: `ev_${discoveryId}`,
+    kind: 'receipt',
+    sourceLabel: `Receipt inbox · ${s.scan.mailbox}`,
+    observedAt: d.lastReceiptAt,
+    confidence: d.confidence === 'confirmed' ? 'confirmed' : 'inferred',
+    summary: `${d.receiptCount} receipt${d.receiptCount === 1 ? '' : 's'} from ${d.merchant}, most recently ${longDate(d.lastReceiptAt)}.`,
+    detail: d.confidenceWhy,
+  });
+
+  if (!d.isTrial) {
+    s.opportunities.push({
+      id: `op_${discoveryId}`,
+      paymentId: p.id,
+      type: 'cancel',
+      monthlyReductionCents: monthlyEquivalent(p),
+      // Found records stay out of the seeded candidate headline so the
+      // baseline figure keeps meaning what it meant.
+      countsTowardCandidateTotal: false,
+      availability: 'eligible',
+      status: 'open',
+      evidenceIds: [`ev_${discoveryId}`],
+      headline: `${d.merchant} was found in your inbox, not on your list`,
+      rationale: d.note,
+      assumptions: ['Found from receipts. Usage is unknown until you tell SubKill.'],
+      reviewAfter: null,
+    });
+  }
+
+  d.status = 'added';
+  return s;
+}
+
+export function dismissDiscovery(state: DemoState, discoveryId: string): DemoState {
+  const s = clone(state);
+  const d = s.discoveries.find((x) => x.id === discoveryId);
+  if (!d || d.status !== 'open') return state;
+  d.status = 'dismissed';
+  return s;
+}
+
+export function restoreDiscovery(state: DemoState, discoveryId: string): DemoState {
+  const s = clone(state);
+  const d = s.discoveries.find((x) => x.id === discoveryId);
+  if (!d || d.status !== 'dismissed') return state;
+  d.status = 'open';
   return s;
 }
 

@@ -236,6 +236,51 @@ export interface BillDocument {
   totalCents: Cents;
 }
 
+/** A receipt email in the simulated mailbox. Evidence for a discovered charge. */
+export interface ReceiptEmail {
+  from: string;
+  subject: string;
+  receivedAt: string;
+  snippet: string;
+}
+
+export type DiscoveryVerdict = 'new' | 'already_tracked' | 'uncertain';
+export type DiscoveryStatus = 'open' | 'added' | 'dismissed';
+
+/**
+ * Something the simulated inbox scan found. Nothing here counts toward any
+ * total until the user confirms it, because a receipt is evidence of a charge,
+ * not proof of an active recurring plan.
+ */
+export interface Discovery {
+  id: string;
+  merchant: string;
+  plan: string;
+  category: Category;
+  amountCents: Cents;
+  interval: Interval;
+  verdict: DiscoveryVerdict;
+  status: DiscoveryStatus;
+  /** Set when the scan matched an existing tracked record. */
+  matchedPaymentId: string | null;
+  confidence: 'confirmed' | 'likely' | 'unclear';
+  confidenceWhy: string;
+  firstSeenAt: string;
+  lastReceiptAt: string;
+  receiptCount: number;
+  nextChargeAt: string | null;
+  isTrial: boolean;
+  emails: ReceiptEmail[];
+  note: string;
+}
+
+export interface ScanState {
+  mailbox: string;
+  status: 'never_run' | 'running' | 'complete';
+  lastRunAt: string | null;
+  messagesScanned: number;
+}
+
 export interface ConnectionSource {
   id: string;
   label: string;
@@ -879,6 +924,126 @@ export const SEED_CONNECTIONS: ConnectionSource[] = [
   { id: 'cx_email', label: 'Receipt inbox', state: 'simulated_healthy', lastSyncAt: offsetISO(0, 15), note: 'Simulated connection. No real mailbox is linked.' },
 ];
 
+// ---------------------------------------------------------------------------
+// Inbox discovery — synthetic receipts in a simulated mailbox
+// ---------------------------------------------------------------------------
+
+export const DEMO_MAILBOX = 'nancy@example-demo.com';
+
+/** Messages the scan reports reading. Illustrative, like everything else here. */
+export const SCAN_MESSAGE_COUNT = 4_812;
+
+export const SEED_DISCOVERIES: Discovery[] = [
+  {
+    id: 'dx_audible', merchant: 'Audible', plan: 'Premium Plus', category: 'Learning',
+    amountCents: 1495, interval: 'monthly', verdict: 'new', status: 'open',
+    matchedPaymentId: null, confidence: 'confirmed',
+    confidenceWhy: 'Eighteen receipts from the same sender, on the 2nd of each month, all for the same amount.',
+    firstSeenAt: '2025-03-02T08:12:00.000Z',
+    lastReceiptAt: '2026-09-02T08:09:00.000Z',
+    receiptCount: 18, nextChargeAt: offsetISO(22, 8), isTrial: false,
+    emails: [
+      { from: 'receipts@audible.example', subject: 'Your Audible membership receipt', receivedAt: '2026-09-02T08:09:00.000Z', snippet: 'Premium Plus membership · $14.95 · Visa ···4412' },
+      { from: 'receipts@audible.example', subject: 'Your Audible membership receipt', receivedAt: '2026-08-02T08:11:00.000Z', snippet: 'Premium Plus membership · $14.95 · Visa ···4412' },
+      { from: 'welcome@audible.example', subject: 'Welcome to Audible', receivedAt: '2025-03-02T08:12:00.000Z', snippet: 'Your membership starts today. First credit available now.' },
+    ],
+    note: 'Billed every month since March 2025 and not on your list. This is the kind of charge that keeps running after you stop noticing it.',
+  },
+  {
+    id: 'dx_blinkist', merchant: 'Blinkist', plan: 'Premium', category: 'Learning',
+    amountCents: 899, interval: 'monthly', verdict: 'new', status: 'open',
+    matchedPaymentId: null, confidence: 'confirmed',
+    confidenceWhy: 'Seven consecutive monthly receipts from the same sender for the same amount.',
+    firstSeenAt: '2026-02-19T10:02:00.000Z',
+    lastReceiptAt: '2026-08-19T10:04:00.000Z',
+    receiptCount: 7, nextChargeAt: offsetISO(9, 10), isTrial: false,
+    emails: [
+      { from: 'billing@blinkist.example', subject: 'Payment received', receivedAt: '2026-08-19T10:04:00.000Z', snippet: 'Blinkist Premium · $8.99 · renews monthly' },
+      { from: 'billing@blinkist.example', subject: 'Payment received', receivedAt: '2026-07-19T10:03:00.000Z', snippet: 'Blinkist Premium · $8.99 · renews monthly' },
+    ],
+    note: 'Started after a free trial in February 2026. No receipt has been opened since March.',
+  },
+  {
+    id: 'dx_masterclass', merchant: 'MasterClass', plan: 'Individual trial', category: 'Learning',
+    amountCents: 1800, interval: 'monthly', verdict: 'new', status: 'open',
+    matchedPaymentId: null, confidence: 'confirmed',
+    confidenceWhy: 'A signup confirmation stating the trial end date, and no cancellation email after it.',
+    firstSeenAt: offsetISO(-9, 9),
+    lastReceiptAt: offsetISO(-9, 9),
+    receiptCount: 1, nextChargeAt: offsetISO(5, 9), isTrial: true,
+    emails: [
+      { from: 'hello@masterclass.example', subject: 'Your free trial has started', receivedAt: offsetISO(-9, 9), snippet: 'Your 14-day trial ends on Sep 15, 2026. You will then be billed $18.00 monthly unless you cancel.' },
+    ],
+    note: 'A free trial that converts in five days. Nothing in the mailbox says it was cancelled.',
+  },
+  {
+    id: 'dx_strava', merchant: 'Strava', plan: 'Subscription', category: 'Fitness',
+    amountCents: 1199, interval: 'monthly', verdict: 'new', status: 'open',
+    matchedPaymentId: null, confidence: 'likely',
+    confidenceWhy: 'Three receipts roughly a month apart, but the amount changed once, so the plan may have altered.',
+    firstSeenAt: '2026-06-11T07:40:00.000Z',
+    lastReceiptAt: '2026-08-11T07:44:00.000Z',
+    receiptCount: 3, nextChargeAt: offsetISO(1, 8), isTrial: false,
+    emails: [
+      { from: 'no-reply@strava.example', subject: 'Receipt for your subscription', receivedAt: '2026-08-11T07:44:00.000Z', snippet: 'Subscription · $11.99' },
+      { from: 'no-reply@strava.example', subject: 'Receipt for your subscription', receivedAt: '2026-06-11T07:40:00.000Z', snippet: 'Subscription · $9.99 introductory' },
+    ],
+    note: 'The amount rose from $9.99 to $11.99 between June and August. Confirm the current price before adding it.',
+  },
+  {
+    id: 'dx_notion', merchant: 'Notion', plan: 'Unknown', category: 'Software',
+    amountCents: 1000, interval: 'monthly', verdict: 'uncertain', status: 'open',
+    matchedPaymentId: null, confidence: 'unclear',
+    confidenceWhy: 'A single receipt. One charge is not a pattern, and nothing in it says the plan repeats.',
+    firstSeenAt: '2026-07-28T16:20:00.000Z',
+    lastReceiptAt: '2026-07-28T16:20:00.000Z',
+    receiptCount: 1, nextChargeAt: null, isTrial: false,
+    emails: [
+      { from: 'team@notion.example', subject: 'Your receipt', receivedAt: '2026-07-28T16:20:00.000Z', snippet: 'Thanks for your payment of $10.00.' },
+    ],
+    note: 'SubKill will not guess at this one. It could be a monthly plan or a single purchase. Add it only if you know which.',
+  },
+  {
+    id: 'dx_netflix', merchant: 'Netflix', plan: 'Standard with ads', category: 'Streaming',
+    amountCents: 1599, interval: 'monthly', verdict: 'already_tracked', status: 'open',
+    matchedPaymentId: 'p_netflix', confidence: 'confirmed',
+    confidenceWhy: 'Receipts match a record already on your list.',
+    firstSeenAt: '2026-06-11T09:00:00.000Z',
+    lastReceiptAt: '2026-08-11T09:02:00.000Z',
+    receiptCount: 3, nextChargeAt: offsetISO(1, 9), isTrial: false,
+    emails: [
+      { from: 'info@netflix.example', subject: 'Your Netflix bill', receivedAt: '2026-08-11T09:02:00.000Z', snippet: 'Standard with ads · $15.99' },
+    ],
+    note: 'Already tracked. Nothing to do.',
+  },
+  {
+    id: 'dx_adobe', merchant: 'Adobe', plan: 'Photography', category: 'Software',
+    amountCents: 2499, interval: 'monthly', verdict: 'already_tracked', status: 'open',
+    matchedPaymentId: 'p_adobe', confidence: 'confirmed',
+    confidenceWhy: 'Receipts match a record already on your list.',
+    firstSeenAt: '2026-06-28T11:00:00.000Z',
+    lastReceiptAt: '2026-08-28T11:01:00.000Z',
+    receiptCount: 3, nextChargeAt: offsetISO(18, 9), isTrial: false,
+    emails: [
+      { from: 'billing@adobe.example', subject: 'Your invoice is ready', receivedAt: '2026-08-28T11:01:00.000Z', snippet: 'Photography plan · $24.99' },
+    ],
+    note: 'Already tracked. Nothing to do.',
+  },
+  {
+    id: 'dx_spotify', merchant: 'Spotify', plan: 'Premium Individual', category: 'Streaming',
+    amountCents: 1199, interval: 'monthly', verdict: 'already_tracked', status: 'open',
+    matchedPaymentId: 'p_spotify', confidence: 'confirmed',
+    confidenceWhy: 'Receipts match a record already on your list.',
+    firstSeenAt: '2026-06-22T06:00:00.000Z',
+    lastReceiptAt: '2026-08-22T06:03:00.000Z',
+    receiptCount: 3, nextChargeAt: offsetISO(12, 9), isTrial: false,
+    emails: [
+      { from: 'no-reply@spotify.example', subject: 'Your receipt from Spotify', receivedAt: '2026-08-22T06:03:00.000Z', snippet: 'Premium Individual · $11.99' },
+    ],
+    note: 'Already tracked. Nothing to do.',
+  },
+];
+
 export const SAVINGS_GOAL_CENTS: Cents = 30_000;
 
 export interface SeedSettings {
@@ -910,7 +1075,7 @@ export const SEED_CASES: ActionCase[] = [];
 // The complete initial state
 // ---------------------------------------------------------------------------
 
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 export interface DemoState {
   schemaVersion: number;
@@ -932,6 +1097,8 @@ export interface DemoState {
   alertState: Record<string, { status: 'open' | 'watching' | 'resolved'; reviewAfter: string | null }>;
   tourSeen: boolean;
   processedObligationIds: string[];
+  discoveries: Discovery[];
+  scan: ScanState;
   harborOffer: {
     stage: 'none' | 'draft_prepared' | 'response_received' | 'accepted';
     creditCents: Cents;
@@ -962,6 +1129,8 @@ export function createInitialState(): DemoState {
     alertState: {},
     tourSeen: false,
     processedObligationIds: [],
+    discoveries: SEED_DISCOVERIES.map((d) => ({ ...d, emails: d.emails.map((e) => ({ ...e })) })),
+    scan: { mailbox: DEMO_MAILBOX, status: 'never_run', lastRunAt: null, messagesScanned: 0 },
     harborOffer: { stage: 'none', creditCents: HARBOR_CREDIT_CENTS, months: 12, effectiveAt: null, expiresAt: null },
   };
 }

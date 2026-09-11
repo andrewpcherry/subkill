@@ -884,6 +884,7 @@ button.tile:hover::before { opacity: 0.85; }
 [data-screen='pricing']  { --accent: #a78bfa; --accent2: #ff4d8d; }
 [data-screen='settings'] { --accent: #c4b5fd; --accent2: #3dc8ff; }
 [data-screen='roadmap']  { --accent: #ffd645; --accent2: #ff8a3d; }
+[data-screen='discovery']{ --accent: #ff8a3d; --accent2: #ff4d8d; }
 
 /* Page titles carry the screen's colour. */
 [data-screen] > header h1,

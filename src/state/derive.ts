@@ -819,6 +819,54 @@ export function findTarget(s: DemoState, targetCents: Cents): TargetResult {
 }
 
 // ---------------------------------------------------------------------------
+// Inbox discovery
+// ---------------------------------------------------------------------------
+
+export function discoveriesByVerdict(s: DemoState) {
+  const open = s.discoveries.filter((d) => d.status === 'open');
+  return {
+    found: open.filter((d) => d.verdict === 'new'),
+    uncertain: open.filter((d) => d.verdict === 'uncertain'),
+    alreadyTracked: open.filter((d) => d.verdict === 'already_tracked'),
+    added: s.discoveries.filter((d) => d.status === 'added'),
+    dismissed: s.discoveries.filter((d) => d.status === 'dismissed'),
+  };
+}
+
+/**
+ * What the untracked findings would add to the monthly commitment if every one
+ * were confirmed. A projection of unconfirmed records, never part of the
+ * current commitment figure.
+ */
+export function undiscoveredMonthlyCents(s: DemoState): Cents {
+  return discoveriesByVerdict(s)
+    .found.filter((d) => !d.isTrial)
+    .reduce((a, d) => a + (d.interval === 'annual' ? Math.round(d.amountCents / 12) : d.amountCents), 0);
+}
+
+export function scanSummary(s: DemoState) {
+  const g = discoveriesByVerdict(s);
+  const fresh = dataFreshness(s);
+  const inbox = s.connections.find((c) => c.id === 'cx_email');
+  return {
+    status: s.scan.status,
+    mailbox: s.scan.mailbox,
+    lastRunAt: s.scan.lastRunAt,
+    messagesScanned: s.scan.messagesScanned,
+    newCount: g.found.length,
+    uncertainCount: g.uncertain.length,
+    trackedCount: g.alreadyTracked.length,
+    addedCount: g.added.length,
+    monthlyIfAllAdded: undiscoveredMonthlyCents(s),
+    trialsFound: g.found.filter((d) => d.isTrial).length,
+    /** A scan can only speak for the mailbox it can actually read. */
+    sourceUsable: inbox ? inbox.state !== 'disconnected' : false,
+    sourceStale: inbox ? inbox.state === 'simulated_stale' : false,
+    canVerify: fresh.canVerifyAbsence,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Data freshness
 // ---------------------------------------------------------------------------
 

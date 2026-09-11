@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowRight, CalendarDays, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, CalendarDays, CheckCircle2, Mail } from 'lucide-react';
 import { useStore } from '../store.jsx';
 import { CATEGORY_COLOR, Card, Chip, Money, Ring, Tile, WhyPopover } from '../ui.jsx';
 import {
   annualizedCommitment, candidateAnnualReduction, dataFreshness, decisionQueue,
   formatMoney, isActive, longDate, monthlyCommitment, monthlyEquivalent,
-  nextReviewDate, relativeDay, scheduledInWindow, shortDate, topDecisions, trackedItems,
+  nextReviewDate, relativeDay, scanSummary, scheduledInWindow, shortDate,
+  topDecisions, trackedItems,
 } from '../state/derive.ts';
 
 function greeting(nowISO) {
@@ -143,6 +144,7 @@ export default function Home() {
   const fresh = dataFreshness(state);
   const upcoming = scheduledInWindow(state, 30);
   const review = nextReviewDate(state);
+  const scan = scanSummary(state);
 
   const openDecision = (card) => {
     if (card.paymentId === 'p_harbor') setSheet({ kind: 'bill', paymentId: 'p_harbor' });
@@ -241,7 +243,7 @@ export default function Home() {
           />
           <Tile
             label="Candidates"
-            value={formatMoney(candidateAnnualReduction(state), { cents: false })}
+            value={formatMoney(candidateAnnualReduction(state))}
             note="Per year. Proposals, not savings."
             glow="#4ff5c0"
             valueColor="var(--mint)"
@@ -256,7 +258,33 @@ export default function Home() {
           />
         </div>
 
-        <button type="button" className="lrow" style={{ marginTop: 12 }} onClick={() => go('money', 'list')}>
+        <button
+          type="button"
+          className="lrow"
+          style={{
+            marginTop: 12,
+            borderColor: scan.status === 'complete' ? 'rgba(255,138,61,.34)' : 'var(--glass-line)',
+            background: 'linear-gradient(96deg, rgba(255,138,61,.14), transparent 52%), var(--glass)',
+          }}
+          onClick={() => go('discovery')}
+        >
+          <Mail size={17} color="#ff8a3d" style={{ flex: 'none' }} />
+          <div className="grow">
+            <div className="small" style={{ fontWeight: 620 }}>
+              {scan.status === 'complete'
+                ? `${scan.newCount} charge${scan.newCount === 1 ? '' : 's'} billing you that aren't on your list`
+                : 'Scan your inbox for forgotten subscriptions'}
+            </div>
+            <div className="tiny dim">
+              {scan.status === 'complete'
+                ? `Worth ${formatMoney(scan.monthlyIfAllAdded)}/month if you confirm them all`
+                : `SubKill reads receipts in ${scan.mailbox} and finds what you never wrote down`}
+            </div>
+          </div>
+          <ArrowRight size={15} color="#ff8a3d" />
+        </button>
+
+        <button type="button" className="lrow" style={{ marginTop: 7 }} onClick={() => go('money', 'list')}>
           <CalendarDays size={17} color="var(--text-3)" style={{ flex: 'none' }} />
           <div className="grow">
             <div className="small" style={{ fontWeight: 600 }}>{items.total} recurring items tracked</div>

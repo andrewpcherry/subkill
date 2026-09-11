@@ -17,13 +17,15 @@ import {
   confirmedAnnualReduction, dataFreshness, decisionDeadline, findTarget,
   forecastTotals, formatMoney, grossObservedBenefit, harborComparison,
   monthlyCommitment, monthlyReport, netObservedBenefit, paymentById,
-  scenarioMonthlyCommitment, subscriptionsMonthlyTotal, topDecisions, trackedItems,
+  scanSummary, scenarioMonthlyCommitment, subscriptionsMonthlyTotal,
+  topDecisions, trackedItems,
 } from './derive.ts';
 import {
-  acceptProviderOffer, activatePremium, advanceDays, approveCancellation,
-  applyPause, keepPayment, prepareProviderMessage, prepareRefundDraft,
+  acceptProviderOffer, activatePremium, addDiscovery, advanceDays,
+  approveCancellation, applyPause, completeScan, dismissDiscovery, keepPayment,
+  prepareProviderMessage, prepareRefundDraft, restoreDiscovery,
   simulateLaterCharge, simulateProviderResponse, simulateRefundResponse,
-  simulateSendRefundRequest, setConnectionState,
+  simulateSendRefundRequest, setConnectionState, startScan,
 } from './actions.ts';
 
 let passed = 0;
@@ -372,6 +374,80 @@ check('reset restores the identical baseline after any scenario', () => {
   assert.equal(grossObservedBenefit(fresh), 8700);
   assert.equal(trackedItems(fresh).total, 27);
   assert.equal(candidateAnnualReduction(fresh), 116_352);
+});
+
+// --- Inbox discovery -------------------------------------------------------
+
+check('findings sit outside every total until they are confirmed', () => {
+  const scanned = completeScan(startScan(base));
+  assert.equal(scanned.scan.status, 'complete');
+  // The scan changes nothing about what you owe.
+  assert.equal(monthlyCommitment(scanned), 84200);
+  assert.equal(trackedItems(scanned).total, 27);
+  assert.equal(candidateAnnualReduction(scanned), 116_352);
+  const s = scanSummary(scanned);
+  assert.equal(s.newCount, 4);      // Audible, Blinkist, MasterClass trial, Strava
+  assert.equal(s.uncertainCount, 1); // Notion, a single receipt
+  assert.equal(s.trackedCount, 3);   // Netflix, Adobe, Spotify matched
+  // Trials are excluded from the "if you confirmed all" monthly figure.
+  assert.equal(s.monthlyIfAllAdded, 1495 + 899 + 1199);
+});
+
+check('confirming a finding adds it to the commitment exactly once', () => {
+  const scanned = completeScan(startScan(base));
+  const once = addDiscovery(scanned, 'dx_audible');
+  assert.equal(monthlyCommitment(once), 84200 + 1495);
+  assert.equal(trackedItems(once).subscriptions, 19);
+  assert.equal(trackedItems(once).total, 28);
+
+  const twice = addDiscovery(once, 'dx_audible');
+  assert.equal(monthlyCommitment(twice), 84200 + 1495);
+  assert.equal(twice.payments.filter((p) => p.id === 'p_dx_audible').length, 1);
+});
+
+check('a confirmed finding brings its receipts with it as evidence', () => {
+  const added = addDiscovery(completeScan(startScan(base)), 'dx_blinkist');
+  const ev = added.evidence.find((e) => e.id === 'ev_dx_blinkist');
+  assert.ok(ev, 'evidence record created');
+  assert.equal(ev!.kind, 'receipt');
+  assert.match(ev!.summary, /7 receipts from Blinkist/);
+  const op = added.opportunities.find((o) => o.id === 'op_dx_blinkist')!;
+  assert.equal(op.countsTowardCandidateTotal, false);
+  // The seeded candidate headline is unchanged by a found record.
+  assert.equal(candidateAnnualReduction(added), 116_352);
+});
+
+check('a found trial is added as a trial, not as paid commitment', () => {
+  const added = addDiscovery(completeScan(startScan(base)), 'dx_masterclass');
+  const p = paymentById(added, 'p_dx_masterclass')!;
+  assert.equal(p.kind, 'trial');
+  assert.ok(p.trial);
+  assert.equal(monthlyCommitment(added), 84200); // trials stay out
+  assert.equal(trackedItems(added).trials, 3);
+});
+
+check('an already-tracked match cannot be added again as a duplicate', () => {
+  const scanned = completeScan(startScan(base));
+  const attempted = addDiscovery(scanned, 'dx_netflix');
+  assert.equal(monthlyCommitment(attempted), 84200);
+  assert.ok(!attempted.payments.some((p) => p.id === 'p_dx_netflix'));
+});
+
+check('dismissing a finding removes it from the queue and can be undone', () => {
+  const scanned = completeScan(startScan(base));
+  const dismissed = dismissDiscovery(scanned, 'dx_strava');
+  assert.equal(scanSummary(dismissed).newCount, 3);
+  assert.equal(monthlyCommitment(dismissed), 84200);
+  const restored = restoreDiscovery(dismissed, 'dx_strava');
+  assert.equal(scanSummary(restored).newCount, 4);
+});
+
+check('a disconnected mailbox cannot be scanned, and a stale one is flagged', () => {
+  const off = setConnectionState(base, 'cx_email', 'disconnected');
+  assert.equal(scanSummary(off).sourceUsable, false);
+  const stale = setConnectionState(completeScan(startScan(base)), 'cx_email', 'simulated_stale');
+  assert.equal(scanSummary(stale).sourceStale, true);
+  assert.equal(scanSummary(stale).sourceUsable, true);
 });
 
 // --- Formatting ------------------------------------------------------------
