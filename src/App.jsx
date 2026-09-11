@@ -4,7 +4,7 @@ import {
   Settings as SettingsIcon, ShieldCheck, Sliders, Users, Wallet, X,
 } from 'lucide-react';
 import { StoreProvider, useStore } from './store.jsx';
-import { DemoBadge } from './ui.jsx';
+import { DemoBadge, Logo, Wordmark } from './ui.jsx';
 import Home from './screens/Home.jsx';
 import MoneyScreen from './screens/Money.jsx';
 import Alerts from './screens/Alerts.jsx';
@@ -32,49 +32,88 @@ const SECONDARY = [
 
 // ---------------------------------------------------------------- welcome
 
+/** Three real records from the seed, shown as a tilted glass stack. */
+const PREVIEW = [
+  { merchant: 'Canva Pro', meta: 'Trial ends tomorrow', amount: '$14.99', cat: 'Software', tone: 'amber' },
+  { merchant: 'Netflix', meta: 'Renews tomorrow · unused 39d', amount: '$15.99', cat: 'Streaming', tone: 'amber' },
+  { merchant: 'Harbor Internet', meta: 'Credit expired · $71 → $79', amount: '$79.00', cat: 'Utilities', tone: 'blue' },
+];
+
 function Welcome() {
   const { setEntered, go, setState } = useStore();
+  const enter = (tour) => {
+    setEntered(true);
+    if (tour) {
+      setState((s) => ({ ...s, tourSeen: false }));
+      go('home');
+      window.dispatchEvent(new CustomEvent('subkill:tour'));
+    } else {
+      go('home');
+    }
+  };
+
   return (
     <div className="welcome">
-      <div className="brand" style={{ padding: 0, marginBottom: 16 }}>
-        <div className="brand-mark">S</div>
-        <div style={{ textAlign: 'left' }}>
-          <div className="brand-name" style={{ fontSize: 17 }}>SubKill</div>
-          <div className="brand-tag">Know where every dollar goes.</div>
+      <div className="welcome-inner">
+        <div className="welcome-copy">
+          <Wordmark size={18} tagline />
+
+          <h1 className="welcome-h1">
+            Your recurring payments.
+            <span className="grad"> Under control.</span>
+          </h1>
+
+          <p className="muted welcome-sub">
+            SubKill finds upcoming charges, helps you make the right call, and keeps watching after you act.
+          </p>
+
+          <div className="welcome-promise">
+            <span>Know what's coming.</span>
+            <span className="sep" />
+            <span>Keep what matters.</span>
+            <span className="sep" />
+            <span>Stop paying for what doesn't.</span>
+          </div>
+
+          <div className="btnrow welcome-cta">
+            <button type="button" className="btn primary wide" onClick={() => enter(false)}>
+              See My Money
+            </button>
+            <button type="button" className="btn wide" onClick={() => enter(true)}>
+              Take the 2-minute tour
+            </button>
+          </div>
+
+          <div className="welcome-foot">
+            <DemoBadge />
+            <p className="tiny dim" style={{ marginTop: 10 }}>
+              Synthetic data for one sample household. No signup, no bank connection, and no real
+              subscription is ever cancelled.
+            </p>
+          </div>
+        </div>
+
+        <div className="welcome-stack" aria-hidden="true">
+          <div className="stack-glow" />
+          {PREVIEW.map((p, i) => (
+            <div className={`pcard cat-${p.cat}`} key={p.merchant} style={{ '--i': i }}>
+              <span className="pbar" />
+              <div className="grow" style={{ minWidth: 0 }}>
+                <div className="pname">{p.merchant}</div>
+                <div className="pmeta">{p.meta}</div>
+              </div>
+              <div className="pamt num">{p.amount}</div>
+            </div>
+          ))}
+          <div className="pcard psum">
+            <div className="grow">
+              <div className="pmeta">Scheduled next 30 days</div>
+              <div className="figure md" style={{ marginTop: 3 }}>$862.99</div>
+            </div>
+            <span className="chip emerald">3 need you</span>
+          </div>
         </div>
       </div>
-
-      <h1 style={{ fontSize: 30, maxWidth: 520, lineHeight: 1.16 }}>Your recurring payments. Under control.</h1>
-      <p className="muted" style={{ maxWidth: 460, marginTop: 10 }}>
-        SubKill finds upcoming charges, helps you make the right call, and keeps watching after you act.
-      </p>
-      <p className="small dim" style={{ maxWidth: 460, marginTop: 12 }}>
-        Know what's coming. Keep what matters. Stop paying for what doesn't.
-      </p>
-
-      <div className="btnrow" style={{ marginTop: 26, justifyContent: 'center' }}>
-        <button type="button" className="btn primary wide" onClick={() => { setEntered(true); go('home'); }}>
-          See My Money
-        </button>
-        <button
-          type="button"
-          className="btn wide"
-          onClick={() => {
-            setEntered(true);
-            setState((s) => ({ ...s, tourSeen: false }));
-            go('home');
-            window.dispatchEvent(new CustomEvent('subkill:tour'));
-          }}
-        >
-          Take the 2-minute tour
-        </button>
-      </div>
-
-      <div style={{ marginTop: 30 }}><DemoBadge /></div>
-      <p className="tiny dim" style={{ maxWidth: 420, marginTop: 12 }}>
-        A prototype with synthetic data for one sample household. No signup, no bank connection, and no real
-        subscription is ever cancelled.
-      </p>
     </div>
   );
 }
@@ -238,13 +277,7 @@ function Shell() {
   return (
     <div className="app">
       <nav className="sidebar" aria-label="Primary">
-        <div className="brand">
-          <div className="brand-mark">S</div>
-          <div>
-            <div className="brand-name">SubKill</div>
-            <div className="brand-tag">Know where every dollar goes.</div>
-          </div>
-        </div>
+        <div className="brand"><Wordmark size={17} tagline /></div>
 
         {PRIMARY.map(({ id, label, Icon }) => (
           <button
@@ -285,7 +318,7 @@ function Shell() {
       <div className="main">
         <header className="topbar">
           <div className="brand" style={{ padding: 0 }}>
-            <div className="brand-mark">S</div>
+            <Logo size={26} id="lg-top" />
             <div className="brand-name">SubKill</div>
           </div>
           <span className="spacer" />

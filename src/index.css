@@ -688,10 +688,90 @@ input[type='checkbox'] { accent-color: var(--mint); width: 16px; height: 16px; }
 }
 @media (min-width: 1024px) { .tourcard { bottom: 80px; } }
 
+/* ---------------------------------------------------------------- welcome */
+
 .welcome {
-  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; text-align: center;
-  padding: 34px 22px; gap: 7px; position: relative; z-index: 1;
+  min-height: 100vh; min-height: 100dvh; display: flex;
+  align-items: center; justify-content: center;
+  padding: 30px 20px calc(30px + env(safe-area-inset-bottom));
+  position: relative; z-index: 1;
+}
+.welcome-inner {
+  width: 100%; max-width: 1080px;
+  display: grid; grid-template-columns: 1fr; gap: 42px; align-items: center;
+}
+@media (min-width: 940px) {
+  .welcome-inner { grid-template-columns: 1.05fr 0.95fr; gap: 56px; }
+}
+
+.welcome-copy { display: flex; flex-direction: column; gap: 0; }
+
+.welcome-h1 {
+  font-size: clamp(34px, 9vw, 58px);
+  line-height: 1.02; letter-spacing: -0.042em; font-weight: 800;
+  margin-top: 26px; max-width: 13ch;
+}
+.welcome-h1 .grad {
+  background: linear-gradient(104deg, var(--mint) 0%, #8de9ff 42%, var(--violet) 100%);
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent; -webkit-text-fill-color: transparent;
+}
+.welcome-sub { margin-top: 16px; max-width: 44ch; font-size: 15.5px; line-height: 1.55; }
+
+.welcome-promise {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-top: 18px; font-size: 12px; color: var(--text-3); font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.welcome-promise .sep { width: 4px; height: 4px; border-radius: 99px; background: var(--mint); box-shadow: 0 0 8px var(--mint); flex: none; }
+
+.welcome-cta { margin-top: 30px; }
+@media (max-width: 620px) {
+  .welcome-cta { flex-direction: column; align-items: stretch; gap: 10px; }
+  .welcome-cta .btn { width: 100%; }
+  .welcome-promise { font-size: 11px; gap: 8px; }
+}
+.welcome-foot { margin-top: 32px; max-width: 46ch; }
+
+/* tilted glass preview stack */
+.welcome-stack { position: relative; display: flex; flex-direction: column; gap: 11px; padding: 8px 0; }
+@media (min-width: 940px) {
+  .welcome-stack { transform: perspective(1300px) rotateY(-13deg) rotateX(5deg) rotate(-1.4deg); }
+}
+.stack-glow {
+  position: absolute; inset: -14% -10%; z-index: 0; pointer-events: none;
+  background: radial-gradient(52% 44% at 50% 42%, rgba(124, 92, 255, 0.4), transparent 68%),
+              radial-gradient(46% 40% at 72% 78%, rgba(79, 245, 192, 0.26), transparent 68%);
+  filter: blur(28px);
+}
+.pcard {
+  position: relative; z-index: 1;
+  display: flex; align-items: center; gap: 13px;
+  padding: 15px 17px 15px 19px; border-radius: 15px;
+  background: linear-gradient(148deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+  backdrop-filter: blur(22px) saturate(170%);
+  border: 1px solid var(--glass-line-hi);
+  box-shadow: 0 18px 46px -14px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.17);
+  overflow: hidden;
+  animation: float-in 620ms var(--ease) backwards;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+@keyframes float-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+.pcard .pbar {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(180deg, var(--c), transparent);
+  box-shadow: 0 0 16px var(--c);
+}
+.pcard .pname { font-family: var(--display); font-weight: 650; font-size: 14.5px; letter-spacing: -0.02em; }
+.pcard .pmeta { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+.pcard .pamt { font-family: var(--display); font-weight: 720; font-size: 16px; letter-spacing: -0.03em; flex: none; }
+.pcard.psum {
+  background: linear-gradient(148deg, rgba(79, 245, 192, 0.15), rgba(124, 92, 255, 0.1));
+  border-color: rgba(79, 245, 192, 0.3);
+  animation-delay: 300ms;
 }
 
 /* ---------------------------------------------------------------- category colour system

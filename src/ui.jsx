@@ -2,6 +2,62 @@ import React, { useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
 import { formatMoney } from './state/derive.ts';
 
+/**
+ * The mark: a recurring cycle, cut and slipped apart.
+ * Two arcs of one circle with a diagonal break, the halves offset along the cut.
+ */
+export function Logo({ size = 28, id = 'lg' }) {
+  const CIRC = 62.83; // 2πr at r=10
+  const ARC = 25.6;
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
+      fill="none"
+      aria-hidden="true"
+      style={{ display: 'block', overflow: 'visible' }}
+    >
+      <defs>
+        <linearGradient id={`${id}-a`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#4ff5c0" />
+          <stop offset="100%" stopColor="#17d9a0" />
+        </linearGradient>
+        <linearGradient id={`${id}-b`} x1="1" y1="1" x2="0" y2="0">
+          <stop offset="0%" stopColor="#a78bfa" />
+          <stop offset="100%" stopColor="#7c5cff" />
+        </linearGradient>
+      </defs>
+      <g transform="rotate(-38 16 16)">
+        <circle
+          cx="16" cy="16" r="10" fill="none"
+          stroke={`url(#${id}-a)`} strokeWidth="3.7" strokeLinecap="round"
+          strokeDasharray={`${ARC} ${CIRC}`} strokeDashoffset="0"
+          transform="translate(-1.35 0)"
+        />
+        <circle
+          cx="16" cy="16" r="10" fill="none"
+          stroke={`url(#${id}-b)`} strokeWidth="3.7" strokeLinecap="round"
+          strokeDasharray={`${ARC} ${CIRC}`} strokeDashoffset={-CIRC / 2}
+          transform="translate(1.35 0)"
+        />
+      </g>
+    </svg>
+  );
+}
+
+export function Wordmark({ size = 17, tagline = false }) {
+  return (
+    <div className="row" style={{ gap: 9 }}>
+      <Logo size={size * 1.7} />
+      <div style={{ textAlign: 'left' }}>
+        <div className="brand-name" style={{ fontSize: size }}>SubKill</div>
+        {tagline ? <div className="brand-tag">Know where every dollar goes.</div> : null}
+      </div>
+    </div>
+  );
+}
+
 export function Money({ cents, sign = false, hideCents = false, className = '' }) {
   return <span className={`num ${className}`}>{formatMoney(cents, { sign, cents: !hideCents })}</span>;
 }
